@@ -1,8 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import Chart from "react-google-charts";
-import App from './components/App';
-import { kubePodData } from "./data/kube-pod-data-jsonp.js";
+import { kubePodData } from "../data/kube-pod-data-jsonp.js";
 
 const namespaceData = {};
 
@@ -47,16 +46,21 @@ function createPodTimelineRow(podState) {
 function addNamespaceData(podState) {
   let namespace = podState.namespace,
       name = podState.name,
-      startTimestamp = parseInt(podState.timestamp)*1000,
-      endTimestamp = parseInt(podState.timestamp)*1000 + timestampIncrement;
+      startTimestamp = podState.timestamp*1000,
+      endTimestamp = podState.timestamp*1000 + timestampIncrement;
   podState.endTimestamp = endTimestamp;
   podState.startTimestamp = startTimestamp;
   delete podState.timestamp
   namespaceData[namespace] = namespaceData[namespace] || {};
   namespaceData[namespace][name] = namespaceData[namespace][name] || [];
   let previousPodState = namespaceData[namespace][name].slice(-1)[0];
-  if (previousPodState && previousPodState[1] === `${podState.status} ${podState.ready}` && parseInt(previousPodState[4]) <= startTimestamp) {
-    previousPodState[4] = new Date(endTimestamp);
+  if (previousPodState) {
+    if (previousPodState[1] === `${podState.status} ${podState.ready}`) {
+      previousPodState[4] = new Date(endTimestamp);
+    } else {
+       previousPodState[4] = new Date(startTimestamp)
+       namespaceData[namespace][name].push(createPodTimelineRow(podState));
+    }
   } else {
     namespaceData[namespace][name].push(createPodTimelineRow(podState));
   }
@@ -64,7 +68,7 @@ function addNamespaceData(podState) {
 
 kubePodData.forEach(addNamespaceData);
 let rows = []
-Object.keys(namespaceData["kube-system"]).forEach(name => rows.push(...namespaceData["kube-system"][name]));
+Object.keys(namespaceData["scf"]).forEach(name => rows.push(...namespaceData["scf"][name]));
 rows.forEach(row => { row[3] = new Date(row[3]); row[4] = new Date(row[4]);});
 
 const columns = [
@@ -78,8 +82,15 @@ const columns = [
 
 
 class NamespaceSelector extends React.Component {
+  constructor(props) {
+    super(props);
+  }
   render() {
-    return <select>test</select>;
+    return (
+      <select id="namespace">
+        {Object.keys(namespaceData).map(val => <option value={val}>{val}</option>)}
+      </select>
+    )
   }
 }
 class App extends React.Component {
@@ -93,9 +104,9 @@ class App extends React.Component {
         <NamespaceSelector />
         <Chart
           chartType="Timeline"
-          data={[columns, ...namespaces["climbingareas"]]}
-          width="100%"
+          data={[columns, ...rows]}
           options={{"avoidOverlappingGridLines": false}}
+          height="100%"
         />
       </div>
     );
