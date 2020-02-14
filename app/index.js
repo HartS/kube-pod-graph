@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import Chart from "react-google-charts";
+import App from './components/App';
 import { kubePodData } from "./data/kube-pod-data-jsonp.js";
 
 const namespaceData = {};
@@ -101,3 +102,7 @@ class App extends React.Component {
   }
 }
 
+ReactDOM.render(
+  <App />,
+  document.getElementById('app')
+)
