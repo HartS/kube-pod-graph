@@ -5,6 +5,10 @@ var HTMLWebpackPluginConfig = new HTMLWebpackPlugin({
   inject: 'body'
 })
 module.exports = {
+  devServer: {
+    host: "0.0.0.0",
+    disableHostCheck: true
+  },
   entry: __dirname + '/app/index.js',
   module: {
     rules: [
