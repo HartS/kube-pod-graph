@@ -67,9 +67,6 @@ function addNamespaceData(podState) {
 }
 
 kubePodData.forEach(addNamespaceData);
-let rows = []
-Object.keys(namespaceData["scf"]).forEach(name => rows.push(...namespaceData["scf"][name]));
-rows.forEach(row => { row[3] = new Date(row[3]); row[4] = new Date(row[4]);});
 
 const columns = [
   { type: "string", id: "pod-name" },
@@ -85,9 +82,10 @@ class NamespaceSelector extends React.Component {
   constructor(props) {
     super(props);
   }
+
   render() {
     return (
-      <select id="namespace">
+      <select value={this.props.getNamespace()} id="namespace" onChange={this.props.handleChange}>
         {Object.keys(namespaceData).map(val => <option value={val}>{val}</option>)}
       </select>
     )
@@ -96,12 +94,41 @@ class NamespaceSelector extends React.Component {
 class App extends React.Component {
   constructor(props) {
     super(props);
+    let namespaces = Object.keys(namespaceData)
+    let namespace;
+    if (namespaces.indexOf("scf") >= 0) {
+      namespace = "scf";
+    } else if (namespace.indexOf("kubecf") >=0) {
+      namespace = "kubecf";
+    } else {
+      namespace = namespaces[0];
+    }
+    this._handleSelectChange = this._handleSelectChange.bind(this);
+    this.getNamespace = this.getNamespace.bind(this);
+    this.state = {
+      "namespace": namespace
+    }
+  }
+
+  _handleSelectChange(event) {
+    this.setState({"namespace": event.target.value});
+    console.log("value", event.target.value);
+  }
+
+  getNamespace() {
+    return this.state.namespace;
   }
 
   render() {
+    let rows = [];
+    Object.keys(namespaceData[this.state.namespace]).forEach(name => rows.push(...namespaceData[this.state.namespace][name]));
+    rows.forEach(row => { row[3] = new Date(row[3]); row[4] = new Date(row[4]);});
     return (
       <div className="App">
-        <NamespaceSelector />
+        <NamespaceSelector
+          handleChange={this._handleSelectChange}
+          getNamespace={this.getNamespace}
+        />
         <Chart
           chartType="Timeline"
           data={[columns, ...rows]}
